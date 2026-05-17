@@ -3,3 +3,6 @@ site/
 __pycache__/
 .DS_Store
 *.local.md
+
+# Большие справочные бинарники подтягиваются по ссылке из references/README.md
+references/manual/*.pdf

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-05-17
+- `references/`: собраны материалы от производителя и комьюнити (PicoMite User Manual, RC23 release notes, PicoCalc-специфичные заметки Ленарта Хеннигса, индекс примеров michaeladcock, форумные треды, MMBasic style guide, source-code formatter rules) + `references/picocalc/russian_locale.md` с разбором поддержки кириллицы
+- Урок 00: переписан раздел про редактор `EDIT` по официальному мануалу — `F1=SAVE-to-memory`, `F2=RUN`, `Esc=DISCARD`; уточнён статус-бар; добавлены инструкции по выходу из редактора и набору `SAVE`
+- Урок 00: упражнение разделено на копирование `A:`→`B:` (`COPY`/`KILL`/`RENAME` с пояснением кросс-дисковых ограничений) и написание новой программы `clock.bas` через `NEW + EDIT`
+- Уроки 00–02: все строковые литералы в `PRINT`/`INPUT` переведены на ASCII (English) — встроенные шрифты PicoMite не содержат кириллицу, на LCD получалась каша. Комментарии остаются на русском
+- README/index: добавлен раздел «Код на английском, комментарии на русском» с пояснением и ссылкой на `russian_locale.md`
+- Урок 01: усилена позиция «No GOTO» по style guide; пример бесконечного цикла переписан через `DO/LOOP`
+- Урок 02: добавлены замечания по style guide (`OPTION BASE 1`, избегать `:` для chaining), AUTOSAVE-нюанс для программ с `INPUT`, подсказка про `CONST` вместо магических чисел
+- Урок 00: программа `hello.bas` обновлена с пояснительным блоком про ASCII в строках
+- `.tools/picomite_repl.py`: автодетект serial-порта (`/dev/cu.usbserial-*`) и поддержка `PICOMITE_PORT`
+- `.tools/AUTHORING.md`: добавлены gotchas #12–#15 (RENAME через `AS`, кросс-дисковые ограничения, EDIT hotkeys, `EDIT "name.bas"` создаёт файл)
+- `.gitignore`: исключён `references/manual/*.pdf`
+
 ## 2026-05-01
 - Сайт: scaffolding MkDocs Material для публикации курса на GitHub Pages — `mkdocs.yml`, `lessons/index.md` (карта курса), `requirements.txt`, GitHub Actions workflow `.github/workflows/deploy.yml`, `.gitignore`. Локальный preview через `uv run --with mkdocs-material mkdocs serve`.
 - Курс: добавлен урок 02 (Данные и управление) — типы, OPTION EXPLICIT/DEFAULT, массивы, строки, IF/SELECT/FOR/DO, расширенная угадайка с ре-играми и счётом

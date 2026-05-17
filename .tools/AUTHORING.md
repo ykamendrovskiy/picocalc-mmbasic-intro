@@ -6,9 +6,9 @@
 
 - **Кабель в USB-C на корпусе** PicoCalc (не в micro-USB самого Pico — там REPL не идёт).
   - Кабель должен быть data-grade. Charge-only не покажет нового устройства в `/dev/`.
-- **Порт на macOS**: `/dev/cu.usbserial-10` (STM32-мост клавиатуры пробрасывает UART REPL на USB-CDC).
+- **Порт на macOS**: что-то вида `/dev/cu.usbserial-NNN` (STM32-мост клавиатуры пробрасывает UART REPL на USB-CDC). Точные цифры зависят от слота USB-A на хосте — `cu.usbserial-10`, `cu.usbserial-210`, и т.п.
 - **Скорость**: 115200, 8N1, no flow control.
-- **Хелпер**: `.tools/picomite_repl.py` — отправляет команды и читает ответы до промпта `>`.
+- **Хелпер**: `.tools/picomite_repl.py` сам сканирует `/dev/cu.usbserial-*` и берёт единственное совпадение. Если их несколько — печатает кандидатов и просит указать `--port` или переменную окружения `PICOMITE_PORT`.
 
 Запуск:
 ```
@@ -48,6 +48,13 @@ uv run --with pyserial .tools/picomite_repl.py -c 'PRINT MM.VER'
 | `DIM a(N) AS INTEGER` | OK; `OPTION BASE` по умолчанию 0, `DIM a(5)` даёт 6 элементов 0..5 |
 | `DIM grid(N,M) AS INTEGER` | OK |
 | `FORMAT$(3.14159, "%.2f")` | `3.14` |
+| `COPY "A:/file" TO "B:/path/file"` | OK, копирует между дисками с абсолютными путями |
+| `KILL "A:/file"` (из `B:`) | OK, принимает префикс другого диска |
+| `MKDIR "name"` (после `B:`) | OK, создаёт папку на текущем диске |
+| `EDIT "newname.bas"` | OK, открывает пустой буфер и создаёт файл при первом сохранении |
+| F1 в `EDIT` | SAVE: память + выход в REPL (см. gotcha 14) |
+| F2 в `EDIT` | RUN: память + запуск (см. gotcha 14) |
+| Esc в `EDIT` | Exit with discard prompt (см. gotcha 14) |
 
 ## Конфиг устройства (`OPTION LIST`)
 
@@ -89,6 +96,18 @@ OPTION PLATFORM PicoCalc
 9. **`OPTION BASE 1`** должно стоять **до первого `DIM` или `LOCAL`**, иначе `Error: Must be before DIM or LOCAL`.
 10. **`FORMAT$` принимает только float-спецификаторы** (`%f`, `%g`, `%e`). `%d`, `%i`, `%,d`, `%05d` — все дают `Error: Illegal character in format specification`. Для целых — либо `STR$()`+`STRING$()`, либо `FORMAT$(n, "%07.0f")`.
 11. **AUTOSAVE через serial-канал** с программой, содержащей `INPUT "..."`, ломается — REPL воспринимает `INPUT` как интерактивный prompt прямо в момент загрузки. Для проверки целиком надо использовать `OPEN ... FOR OUTPUT AS #1` + `PRINT #1, "..."` + `CLOSE`, потом `LOAD` (см. урок 07).
+12. **`RENAME` синтаксис** — это `RENAME old$ AS new$`, **не `TO`**. `RENAME "a" TO "b"` → `Error : Syntax`.
+13. **Директорийные операции и `RENAME` требуют «текущий диск»** — `RMDIR "B:/foo"` из `A:` → `Error : Only valid on current drive`, аналогично для `CHDIR` (см. п.1) и `RENAME` через границу дисков. В отличие от них, **`COPY` и `KILL` принимают абсолютные пути с префиксом любого диска** и работают кросс-дисково. Для move между `A:` и `B:` — `COPY` + `KILL`, не `RENAME`.
+14. **Хоткеи в `EDIT` — задокументированный канон, но статус-строка их не показывает.** Внизу видно только `EDIT MODE  Ln: N  Col: N  INS`. По мануалу (Full Screen Editor):
+    - **F1 = SAVE** — фиксирует текст редактора в программу в памяти и возвращает в обычный REPL `>`. Не запускает.
+    - **F2 = RUN** — то же самое, но сразу запускает программу.
+    - **Esc** — `Exit and discard all changes (Y/N): _`, выкидывает изменения. Это НЕ save&exit.
+    - **F3** = FIND, **Shift-F3** = find next, **F4** = MARK (внутри редактора), **F5** = PASTE.
+    - **Ctrl-Q / Ctrl-W** = альтернативы для F1 / F2 (для терминалов, не пробрасывающих Fn).
+    - **F4 в REPL** (а не внутри редактора) — глобальный шорткат `EDIT`, поэтому связка «F1 → F4» = «сохранить и снова войти в редактор без запуска».
+    - F1/F2 пишут в память, не в файл — чтобы получить файл, в REPL отдельно `SAVE "name.bas"`.
+    - Источник правды: `references/manual/full_screen_editor.md` и `references/manual/first_steps.md`.
+15. **`EDIT "name.bas"` для несуществующего файла** — открывает пустой редактор. Файл создаётся при выходе F1/F2. На существующем файле создаётся `.bak`-копия. См. `references/manual/edit_command.md`.
 
 ## Перед уроками 04/06/07 нужно проверить
 
